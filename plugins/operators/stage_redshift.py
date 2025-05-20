@@ -72,6 +72,8 @@ class StageToRedshiftOperator(BaseOperator):
         redshift_hook.run(copy_sql)
         self.log.info(f"Staging complete for table {self.table}")
 
+# Sources: Created this custom operation with the aid of generative AI and available open source code, based on provided project templates and documentation.
+
 
 
 

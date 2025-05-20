@@ -108,3 +108,6 @@ def final_project():
 final_project_dag = final_project()
 
 
+# Sources: Made necessary changes to this DAG with the aid of generative AI and available open source code, based on provided project templates and documentation.
+
+

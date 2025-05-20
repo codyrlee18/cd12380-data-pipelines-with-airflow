@@ -45,15 +45,28 @@ class StageToRedshiftOperator(BaseOperator):
         s3_path = f"s3://{self.s3_bucket}/{rendered_key}"
         self.log.info("Built the full S3 path")
 
-        copy_sql = f"""
-            COPY {self.table}
-            FROM '{s3_path}'
-            ACCESS_KEY_ID '{credentials.access_key}'
-            SECRET_ACCESS_KEY '{credentials.secret_key}'
-            FORMAT AS {self.file_format}
-            JSON '{self.json_path}'
-            REGION '{self.region}';
-        """
+        if self.file_format.upper() == "JSON":
+            copy_sql = f"""
+                COPY {self.table}
+                FROM '{s3_path}'
+                ACCESS_KEY_ID '{credentials.access_key}'
+                SECRET_ACCESS_KEY '{credentials.secret_key}'
+                JSON '{self.json_path}'
+                REGION '{self.region}';
+            """
+        elif self.file_format.upper() == "CSV":
+            copy_sql = f"""
+                COPY {self.table}
+                FROM '{s3_path}'
+                ACCESS_KEY_ID '{credentials.access_key}'
+                SECRET_ACCESS_KEY '{credentials.secret_key}'
+                CSV
+                IGNOREHEADER 1
+                REGION '{self.region}';
+            """
+        else:
+            raise ValueError(f"Unsupported file format: {self.file_format}")
+
         
         self.log.info("Running the copy command")
         redshift_hook.run(copy_sql)

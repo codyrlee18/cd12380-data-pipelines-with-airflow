@@ -13,13 +13,13 @@ default_args = {
     'depends_on_past': False,
     'retries': 3,
     'retry_delay': timedelta(seconds= 300),
-    'catchup': False,
 }
 
 @dag(
     default_args=default_args,
     description='Load and transform data in Redshift with Airflow',
     schedule_interval = timedelta(minutes=15),
+    catchup = False
 )
 def final_project():
 
@@ -28,19 +28,23 @@ def final_project():
     stage_events_to_redshift = StageToRedshiftOperator(
         task_id='Stage_events',
         redshift_conn_id= 'redshift',
+        aws_credentials_id= 'aws_credentials',
         table= 'staging_events',
         s3_bucket= 'my-udacity-bucket-codylee',
         s3_key= 'log-data',
-        json_path= 's3://my-udacity-bucket-codylee/log_json_path.json'
+        json_path= 's3://my-udacity-bucket-codylee/log_json_path.json',
+        region= 'us-west-2'
     )
 
     stage_songs_to_redshift = StageToRedshiftOperator(
         task_id='Stage_songs',
         redshift_conn_id= 'redshift',
+        aws_credentials_id= 'aws_credentials',
         table= 'staging_songs',
         s3_bucket= 'my-udacity-bucket-codylee',
         s3_key= 'song-data',
-        json_path= 's3://my-udacity-bucket-codylee/log_json_path.json'
+        json_path= 'auto',
+        region= 'us-west-2'
     )
 
     load_songplays_table = LoadFactOperator(
@@ -86,7 +90,7 @@ def final_project():
         task_id='Run_data_quality_checks',
         redshift_conn_id="redshift",
         test_queries= [
-            "SELECT COUNT(*) FROM songplays WHERE songplay_id IS NULL",
+            "SELECT COUNT(*) FROM songplays WHERE playid IS NULL",
             "SELECT COUNT(*) FROM users WHERE userid IS NULL"
         ],
         expected_results=[0, 0],
@@ -95,12 +99,11 @@ def final_project():
     end_operator = DummyOperator(task_id='Stop_execution')
 
 # set task dependencies
-
-start_operator >> [stage_events_to_redshift, stage_songs_to_redshift]
-[stage_events_to_redshift, stage_songs_to_redshift] >> load_songplays_table
-load_songplays_table >> [load_user_dimension_table, load_song_dimension_table, load_artist_dimension_table, load_time_dimension_table]
-[load_user_dimension_table, load_song_dimension_table, load_artist_dimension_table, load_time_dimension_table] >> run_quality_checks
-run_quality_checks >> end_operator
+    start_operator >> [stage_events_to_redshift, stage_songs_to_redshift]
+    [stage_events_to_redshift, stage_songs_to_redshift] >> load_songplays_table
+    load_songplays_table >> [load_user_dimension_table, load_song_dimension_table, load_artist_dimension_table, load_time_dimension_table]
+    [load_user_dimension_table, load_song_dimension_table, load_artist_dimension_table, load_time_dimension_table] >> run_quality_checks
+    run_quality_checks >> end_operator
 
 final_project_dag = final_project()
 

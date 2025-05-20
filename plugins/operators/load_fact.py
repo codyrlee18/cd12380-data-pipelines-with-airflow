@@ -30,3 +30,5 @@ class LoadFactOperator(BaseOperator):
 
         redshift_hook.run(insert_sql)
         self.log.info(f"Finished loading the data into fact table {self.table}")
+
+# Sources: Created this custom operation with the aid of generative AI and available open source code, based on provided project templates and documentation.

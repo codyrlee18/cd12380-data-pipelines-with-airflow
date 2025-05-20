@@ -47,3 +47,6 @@ class DataQualityOperator(BaseOperator):
         
        
         self.log.info('Data Quality Checks Have Passed')
+
+
+# Sources: Created this custom operation with the aid of generative AI and available open source code, based on provided project templates and documentation.
